@@ -301,6 +301,22 @@ pycodestyle = ">=2.11.0,<2.12.0"
 pyflakes = ">=3.2.0,<3.3.0"
 
 [[package]]
+name = "flake8-pyproject"
+version = "1.2.3"
+description = "Flake8 plug-in loading the configuration from pyproject.toml"
+optional = false
+python-versions = ">= 3.6"
+files = [
+    {file = "flake8_pyproject-1.2.3-py3-none-any.whl", hash = "sha256:6249fe53545205af5e76837644dc80b4c10037e73a0e5db87ff562d75fb5bd4a"},
+]
+
+[package.dependencies]
+Flake8 = ">=5"
+
+[package.extras]
+dev = ["pyTest", "pyTest-cov"]
+
+[[package]]
 name = "h11"
 version = "0.14.0"
 description = "A pure-Python, bring-your-own-I/O implementation of HTTP/1.1"
@@ -1419,4 +1435,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "~3.11.9"
-content-hash = "aab2ed7b4fb8441f6530b512300e81cbc4120535cdc7f3a3ee677529521a479d"
+content-hash = "ee365f3bdcff277f7033782962ff2c52350e440da59cd04e290979e93c6c423a"
