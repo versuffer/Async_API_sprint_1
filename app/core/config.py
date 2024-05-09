@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # Elasticsearch
     ELASTIC_HOST: str
     ELASTIC_PORT: str
-    ELASTIC_SCHEME: str
+    ELASTIC_SCHEMA: str
     ELASTIC_URL: HttpUrl | str = ''
 
     model_config = SettingsConfigDict(env_file=BASEDIR / '.env')
@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     @field_validator('ELASTIC_URL')
     def build_elastic_url(cls, value: str | None, info: ValidationInfo) -> HttpUrl:
         if not value:
-            value = f'{info.data["ELASTIC_SCHEME"]}://{info.data["ELASTIC_HOST"]}:{info.data["ELASTIC_PORT"]}'
+            value = f'{info.data["ELASTIC_SCHEMA"]}://{info.data["ELASTIC_HOST"]}:{info.data["ELASTIC_PORT"]}'
         return HttpUrl(value)
 
 

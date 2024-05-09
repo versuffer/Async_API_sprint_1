@@ -3,16 +3,21 @@ version: '3.8'
 services:
   postgres_db:
     container_name: postgres_db
-    image: postgres:latest
+    image: postgres:16.2
     volumes:
       - ./database_dump/movies_database_dump.sql:/docker-entrypoint-initdb.d/movies_database_dump.sql:ro
       - postgres_data:/var/lib/postgresql/data/
-    env_file:
-      - .env
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_PORT: ${POSTGRES_PORT}
     networks:
       - custom_network
+    expose:
+      - ${POSTGRES_PORT}
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -21,7 +26,7 @@ services:
 
   elasticsearch:
     container_name: elasticsearch
-    image: docker.elastic.co/elasticsearch/elasticsearch:8.6.2
+    image: elasticsearch:8.7.1
     restart: always
     environment:
       - discovery.type=single-node
@@ -38,10 +43,11 @@ services:
 
   etl_scheduler:
     container_name: "etl_scheduler"
-    image: #  TODO Добавить образ Сереги
+    image: docker.io/versuffer2024/etl:latest
     restart: always
-    env_file:
-      - ".env"
+    environment:
+      POSTGRES_HOST: postgres_db
+      ELASTIC_HOST: elasticsearch
     networks:
       - custom_network
     depends_on:
@@ -55,5 +61,5 @@ volumes:
 
 networks:
   custom_network:
-    external: true
+    external: false
     driver: bridge
