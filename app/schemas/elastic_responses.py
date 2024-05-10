@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from app.schemas.v1.films_schemas import GetFilmExtendedSchemaOut
 
 
-class ElasticSeachResponse(BaseModel):
+class ElasticFilmSeachResponse(BaseModel):
     films: dict = Field(alias='hits')
 
     @property
