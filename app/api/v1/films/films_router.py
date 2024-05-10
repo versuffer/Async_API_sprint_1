@@ -16,7 +16,7 @@ films_router.include_router(search_router)
     '',
     status_code=status.HTTP_200_OK,
     summary='Получить список фильмов',
-    response_model=Page[GetFilmSchemaOut],
+    # response_model=Page[GetFilmSchemaOut],
     tags=[ApiTags.V1_FILMS],
 )
 async def get_films(
@@ -24,7 +24,8 @@ async def get_films(
     genre: UUID | None = None,
     service: FilmsService = Depends(),
 ):
-    return paginate(await service.get_films(sort, genre))
+    # return paginate(await service.get_films(sort, genre))
+    return await service.get_films(sort, genre)
 
 
 @films_router.get(

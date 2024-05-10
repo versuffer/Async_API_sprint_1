@@ -4,7 +4,7 @@ from pydantic import BaseModel
 
 
 class GetFilmSchemaOut(BaseModel):
-    uuid: UUID
+    # uuid: UUID
     title: str
     imdb_rating: float
 

@@ -5,13 +5,13 @@ from fastapi import Depends
 from app.schemas.v1.films_schemas import GetFilmSchemaOut
 from app.schemas.v1.persons_schemas import GetPersonSchemaOut
 from app.services.api.v1.base import BaseV1Service
-from app.services.elastic.search_service import SearchService
+from app.cruds.elastic import ElasticCrud
 
 
 class PersonsService(BaseV1Service):
 
-    def __init__(self, search_service: SearchService = Depends()):
-        self.search_service = search_service
+    def __init__(self, crud: ElasticCrud = Depends()):
+        self.crud = crud
 
     async def get_person(self, person_id: UUID) -> GetPersonSchemaOut:
         raise NotImplementedError
@@ -20,4 +20,4 @@ class PersonsService(BaseV1Service):
         raise NotImplementedError
 
     async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
-        return await self.search_service.search_persons(query)
+        return await self.crud.search_persons(query)
