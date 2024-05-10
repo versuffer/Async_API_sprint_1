@@ -1,5 +1,3 @@
-from uuid import UUID
-
 from pydantic import BaseModel, Field
 
 from app.schemas.v1.films_schemas import GetFilmExtendedSchemaOut
