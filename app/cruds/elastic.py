@@ -4,6 +4,7 @@ import elasticsearch
 from elasticsearch import Elasticsearch
 
 from app.core.config import es_settings
+from app.core.logs import logger
 from app.schemas.elastic_responses import ElasticSeachResponse, ElasticGetFilmResponse
 from app.schemas.v1.films_schemas import GetFilmSchemaOut, GetFilmExtendedSchemaOut
 from app.schemas.v1.persons_schemas import GetPersonSchemaOut
@@ -13,7 +14,14 @@ class ElasticCrud:
     def __init__(self):
         self.elastic = Elasticsearch([es_settings.dict()], timeout=5)
 
-    async def build_search_body(self, query: str, page: int, page_size: int, sort: str | None, genre: UUID | None):
+    @staticmethod
+    async def build_film_search_body(
+            query: str | None,
+            page: int,
+            page_size: int,
+            sort: str | None,
+            genre: UUID | None
+    ):
         body = {"query": {"match_all": {}}}
 
         if query:
@@ -47,9 +55,6 @@ class ElasticCrud:
 
         return body
 
-    def process_search_results(self, results: ElasticSeachResponse):
-        return [GetFilmSchemaOut(**hit._source.dict()) for hit in results.hits_list]
-
     async def get_film(self, film_id: UUID) -> GetFilmExtendedSchemaOut | None:
         try:
             result = self.elastic.get(index="movies", id=str(film_id))
@@ -57,27 +62,37 @@ class ElasticCrud:
             parsed_result = ElasticGetFilmResponse(**result)
             return parsed_result.film
         except elasticsearch.NotFoundError as error:
-            print(f"нету фильма такого: {error}")
+            logger.warning(f"Не найден фильм с {film_id=}: {error}")
             return None
         except Exception as error:
-            print(f"Неизвестная ошибка при получении фильма: {error}")
+            logger.error(f"Неизвестная ошибка при получении фильма с {film_id=}: {error}")
             return None
 
-    async def search_films(self, query: str, page: int = 1, page_size: int = 10) -> list[GetFilmSchemaOut]:
-        body = await self.build_search_body(query, page, page_size, None, None)
-        results = self.elastic.search(index="movies", body=body)
-        parsed_results = ElasticSeachResponse(**results)
-        return self.process_search_results(parsed_results)
-
-    async def get_films(self, page: int, page_size: int, sort: str | None, genre: UUID | None) -> list[GetFilmSchemaOut]:
+    async def search_films(self, query: str, page: int, page_size: int) -> list[GetFilmSchemaOut] | None:
         try:
-            body = await self.build_search_body(None, page, page_size, sort, genre)
+            body = await self.build_film_search_body(query, page, page_size, None, None)
             results = self.elastic.search(index="movies", body=body)
             parsed_results = ElasticSeachResponse(**results)
-            return parsed_results.hits_list
-        except Exception as e:
-            print(f"Ошибка при получении фильмов: {e}")
-            return []
+            return parsed_results.films_list
+        except Exception as error:
+            logger.error(f"Неизвестная ошибка при получении фильмов с {query}: {error}")
+            return None
+
+    async def get_films(
+            self,
+            page: int,
+            page_size: int,
+            sort: str | None,
+            genre: UUID | None
+    ) -> list[GetFilmSchemaOut] | None:
+        try:
+            body = await self.build_film_search_body(None, page, page_size, sort, genre)
+            results = self.elastic.search(index="movies", body=body)
+            parsed_results = ElasticSeachResponse(**results)
+            return parsed_results.films_list
+        except Exception as error:
+            logger.error(f"Неизвестная ошибка при получении фильмов: {error}")
+            return None
 
     async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
         raise NotImplementedError

@@ -6,15 +6,11 @@ from app.schemas.v1.films_schemas import GetFilmExtendedSchemaOut
 
 
 class ElasticSeachResponse(BaseModel):
-    hits: dict
+    films: dict = Field(alias='hits')
 
     @property
-    def hits_list(self) -> list[GetFilmExtendedSchemaOut]:
-        # a = self.hits["hits"]
-        # for hit in a:
-        #     d = ElasticHit(**hit)
-        #     e = GetFilmExtendedSchemaOut(**hit["_source"])
-        return [GetFilmExtendedSchemaOut(**hit["_source"]) for hit in self.hits["hits"]]
+    def films_list(self) -> list[GetFilmExtendedSchemaOut]:
+        return [GetFilmExtendedSchemaOut(**film["_source"]) for film in self.films["hits"]]
 
 
 class ElasticGetFilmResponse(BaseModel):
