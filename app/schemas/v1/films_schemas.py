@@ -10,13 +10,13 @@ class GetFilmSchemaOut(BaseModel):
 
 
 class FilmGenre(BaseModel):
-    uuid: UUID
+    uuid: UUID = Field(alias='id')
     name: str
 
 
 class FilmPerson(BaseModel):
-    uuid: UUID
-    full_name: str
+    uuid: UUID = Field(alias='id')
+    full_name: str = Field(alias='name')
 
 
 class FilmActor(FilmPerson):
@@ -33,7 +33,8 @@ class FilmDirector(FilmPerson):
 
 class GetFilmExtendedSchemaOut(GetFilmSchemaOut):
     description: str
-    genre: list[FilmGenre]
+    genres: list[str]
+    # genres: list[FilmGenre] #TODO вернуть когда будут жанры
     actors: list[FilmActor]
     writers: list[FilmWriter]
     directors: list[FilmDirector]

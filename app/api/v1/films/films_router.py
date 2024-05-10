@@ -25,8 +25,7 @@ async def get_films(
     service: FilmsService = Depends(),
 ):
     # return paginate(await service.get_films(sort, genre))
-    res = await service.get_films(sort, genre)
-    return res
+    return await service.get_films(sort, genre)
 
 
 @films_router.get(

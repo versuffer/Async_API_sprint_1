@@ -16,7 +16,7 @@ class FilmsService(BaseV1Service):
         return await self.crud.get_films(sort, genre)
 
     async def get_film(self, film_id: UUID) -> GetFilmExtendedSchemaOut:
-        raise NotImplementedError
+        return await self.crud.get_film(film_id)
 
     async def search_films(self, query: str) -> list[GetFilmSchemaOut]:
         return await self.crud.search_films(query)

@@ -3,7 +3,7 @@ from uuid import UUID
 from elasticsearch import Elasticsearch
 
 from app.core.config import es_settings
-from app.schemas.v1.films_schemas import GetFilmSchemaOut
+from app.schemas.v1.films_schemas import GetFilmSchemaOut, GetFilmExtendedSchemaOut
 from app.schemas.v1.persons_schemas import GetPersonSchemaOut
 
 
@@ -16,6 +16,17 @@ class ElasticCrud:
 
     async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
         raise NotImplementedError
+
+    async def get_film(self, film_id: UUID) -> GetFilmExtendedSchemaOut:
+        try:
+            result = self.elastic.get(index="movies", id=str(film_id))
+            if not result["found"]:
+                raise Exception(f"Фильм с id {film_id} не найден")
+            film = GetFilmExtendedSchemaOut(**result["_source"])
+            return film
+        except Exception as e:
+            print(f"Ошибка при получении фильма: {e}")
+            raise e
 
     async def get_films(self, sort: str | None, genre: UUID | None) -> list[GetFilmSchemaOut]:
         try:
