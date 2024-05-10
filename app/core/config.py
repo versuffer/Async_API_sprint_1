@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Annotated
 
-from pydantic import HttpUrl, RedisDsn, field_validator
+from pydantic import Extra, Field, HttpUrl, RedisDsn, field_validator
 from pydantic_core.core_schema import ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -47,4 +47,15 @@ class Settings(BaseSettings):
         return HttpUrl(value)
 
 
+class ElasticsearchSettings(BaseSettings):
+    scheme: str = Field(alias='ELASTIC_SCHEMA')
+    host: str = Field(alias='ELASTIC_HOST')
+    port: int = Field(alias='ELASTIC_PORT')
+
+    class Config:
+        env_file = '.env'
+        extra = Extra.ignore
+
+
+es_settings = ElasticsearchSettings()
 app_settings = Settings()
