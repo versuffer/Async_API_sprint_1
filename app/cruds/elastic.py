@@ -2,6 +2,7 @@ from uuid import UUID
 
 import elasticsearch
 from elasticsearch import Elasticsearch
+from pydantic import ValidationError
 
 from app.core.config import es_settings
 from app.core.logs import logger
@@ -9,6 +10,7 @@ from app.cruds.base import CrudInterface
 from app.schemas.elastic_responses import (
     ElasticFilmSeachResponse,
     ElasticGetFilmResponse,
+    ElasticGetResponse,
     ElasticSearchResponse,
 )
 from app.schemas.v1.films_schemas import (
@@ -88,13 +90,32 @@ class ElasticCrud(CrudInterface):
             logger.error(f"Неизвестная ошибка при получении фильмов: {error}")
             return None
 
-    async def get_genres(self) -> list[GetGenreSchemaOut]:
-        result = self.elastic.search(index="genres")
-        validated_obj = ElasticSearchResponse(**result.body)
-        return validated_obj.get_objects
+    async def get_genres(self) -> list[GetGenreSchemaOut] | None:
+        try:
+            result = self.elastic.search(index="genres")
+            validated_obj = ElasticSearchResponse(**result.body)
+            return validated_obj.get_objects
+        except ValidationError as error:
+            logger.error("Ошибка валидации: %s", error)
+            return None
+        except Exception as error:
+            logger.error("Неизвестная ошибка при получении всех жанров: %s", error)
+            return None
 
     async def get_genre(self, genre_id: UUID):
-        raise NotImplementedError
+        try:
+            result = self.elastic.get(index="genres", id=str(genre_id))
+            validated_obj = ElasticGetResponse(**result.body)
+            return validated_obj.get_out_schema_source
+        except elasticsearch.NotFoundError as error:
+            logger.warning("Не найден жанр: %s", error)
+            return None
+        except ValidationError as error:
+            logger.error("Ошибка валидации: %s", error)
+            return None
+        except Exception as error:
+            logger.error("Неизвестная ошибка при получении всех жанров: %s", error)
+            return None
 
     async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
         raise NotImplementedError

@@ -1,7 +1,6 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi_pagination import Page, paginate
 
 from app.api.docs.tags import ApiTags
 from app.schemas.v1.genres_schemas import GetGenreSchemaOut

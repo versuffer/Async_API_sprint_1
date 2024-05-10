@@ -25,10 +25,9 @@ class IndexList(StrEnum):
     PERSONS = "persons"
 
 
-class Object(BaseModel):
+class BaseObject(BaseModel):
     index: IndexList = Field(alias="_index")
     id: str = Field(alias="_id")
-    score: float = Field(alias="_score")
     source: dict = Field(alias="_source", exclude=True)
 
     @property
@@ -44,6 +43,10 @@ class Object(BaseModel):
                 logger.error("Ops not match index")
 
 
+class Object(BaseObject):
+    score: float = Field(alias="_score")
+
+
 class Result(BaseModel):
     total: dict
     objects: list[Object] = Field(alias="hits", exclude=True)
@@ -55,3 +58,7 @@ class ElasticSearchResponse(BaseModel):
     @property
     def get_objects(self):
         return [obj.get_out_schema_source for obj in self.result.objects]
+
+
+class ElasticGetResponse(BaseObject):
+    pass
