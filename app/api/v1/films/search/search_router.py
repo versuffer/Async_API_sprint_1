@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 
 from app.api.docs.tags import ApiTags
 from app.schemas.v1.films_schemas import GetFilmSchemaOut
@@ -20,4 +20,6 @@ async def search_films(
     page_size: int = 10,
     service: FilmsService = Depends(),
 ):
-    return await service.search_films(page=page, page_size=page_size, query=query)
+    if films := await service.search_films(page=page, page_size=page_size, query=query):
+        return films
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
