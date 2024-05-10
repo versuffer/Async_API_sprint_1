@@ -12,7 +12,18 @@ class ElasticCrud:
         self.elastic = Elasticsearch([es_settings.dict()], timeout=5)
 
     async def search_films(self, query: str) -> list[GetFilmSchemaOut]:
-        return self.elastic.get("movies")
+        body = {
+            "query": {
+                "multi_match": {
+                    "query": query,
+                    "fields": ["title", "genres", "description", "directors_names", "actors_names", "writers_names"]
+                }
+            }
+        }
+        results = self.elastic.search(index="movies", body=body)
+        films = [GetFilmSchemaOut(**film["_source"]) for film in results["hits"]["hits"]]
+
+        return films
 
     async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
         raise NotImplementedError
@@ -22,6 +33,7 @@ class ElasticCrud:
             result = self.elastic.get(index="movies", id=str(film_id))
             if not result["found"]:
                 raise Exception(f"Фильм с id {film_id} не найден")
+            # TODO запрос жанров через сервис жанров
             film = GetFilmExtendedSchemaOut(**result["_source"])
             return film
         except Exception as e:
