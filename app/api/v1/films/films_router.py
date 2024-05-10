@@ -26,9 +26,7 @@ async def get_films(
     params: FilmParams = Depends(),
     service: FilmsService = Depends(),
 ):
-    if films := await service.get_films(params):
-        return films
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return await service.get_films(params)
 
 
 @films_router.get(

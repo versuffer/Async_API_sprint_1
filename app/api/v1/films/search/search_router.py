@@ -20,6 +20,4 @@ async def search_films(
     page_size: int = 10,
     service: FilmsService = Depends(),
 ):
-    if films := await service.search_films(page=page, page_size=page_size, query=query):
-        return films
-    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return await service.search_films(page=page, page_size=page_size, query=query)

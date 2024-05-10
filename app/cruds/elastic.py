@@ -76,7 +76,7 @@ class ElasticCrud(CrudInterface):
             logger.error(f"Неизвестная ошибка при получении фильма с {film_id=}: {error}")
             return None
 
-    async def search_films(self, query: str, page: int, page_size: int) -> list[GetFilmSchemaOut] | None:
+    async def search_films(self, query: str, page: int, page_size: int) -> list[GetFilmSchemaOut]:
         try:
             body = await self.build_film_search_body(query, page, page_size, None, None)
             results = self.elastic.search(index="movies", body=body)
@@ -84,9 +84,9 @@ class ElasticCrud(CrudInterface):
             return parsed_results.films_list  # type:ignore
         except Exception as error:
             logger.error(f"Неизвестная ошибка при получении фильмов с {query}: {error}")
-            return None
+            return []
 
-    async def get_films(self, params: FilmParams) -> list[GetFilmSchemaOut] | None:
+    async def get_films(self, params: FilmParams) -> list[GetFilmSchemaOut]:
         try:
             body = await self.build_film_search_body(
                 query=None, **params.dict()
@@ -96,7 +96,7 @@ class ElasticCrud(CrudInterface):
             return parsed_results.films_list  # type:ignore
         except Exception as error:
             logger.error(f"Неизвестная ошибка при получении фильмов: {error}")
-            return None
+            return []
 
     async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
         raise NotImplementedError
