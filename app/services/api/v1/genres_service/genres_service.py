@@ -16,6 +16,5 @@ class GenresService(BaseV1Service):
     async def get_genres(self) -> list[GetGenreSchemaOut]:
         return await self.crud.get_genres()
 
-
     async def get_genre(self, genre_id: UUID) -> GetGenreSchemaOut:
         return await self.crud.get_genre(genre_id)

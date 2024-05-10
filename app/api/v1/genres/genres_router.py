@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi_pagination import Page, paginate
 
 from app.api.docs.tags import ApiTags

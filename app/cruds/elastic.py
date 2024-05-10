@@ -8,7 +8,8 @@ from app.core.logs import logger
 from app.cruds.base import CrudInterface
 from app.schemas.elastic_responses import (
     ElasticFilmSeachResponse,
-    ElasticGetFilmResponse, ElasticSearchResponse,
+    ElasticGetFilmResponse,
+    ElasticSearchResponse,
 )
 from app.schemas.v1.films_schemas import (
     FilmParams,
@@ -25,11 +26,7 @@ class ElasticCrud(CrudInterface):
 
     @staticmethod
     async def build_film_search_body(
-            query: str | None,
-            page: int,
-            page_size: int,
-            sort: str | None,
-            genre: UUID | None
+        query: str | None, page: int, page_size: int, sort: str | None, genre: UUID | None
     ):
         body: dict = {"query": {"match_all": {}}}
 
@@ -37,18 +34,12 @@ class ElasticCrud(CrudInterface):
             body["query"] = {
                 "multi_match": {
                     "query": query,
-                    "fields": ["title", "genres", "description", "directors_names", "actors_names", "writers_names"]
+                    "fields": ["title", "genres", "description", "directors_names", "actors_names", "writers_names"],
                 }
             }
 
         if genre:
-            body["query"] = {
-                "bool": {
-                    "filter": [
-                        {"term": {"genre_ids": str(genre)}}
-                    ]
-                }
-            }
+            body["query"] = {"bool": {"filter": [{"term": {"genre_ids": str(genre)}}]}}
 
         if sort:
             if sort.startswith('-'):
@@ -89,9 +80,7 @@ class ElasticCrud(CrudInterface):
 
     async def get_films(self, params: FilmParams) -> list[GetFilmSchemaOut] | None:
         try:
-            body = await self.build_film_search_body(
-                query=None, **params.dict()
-            )
+            body = await self.build_film_search_body(query=None, **params.dict())
             results = self.elastic.search(index="movies", body=body)
             parsed_results = ElasticFilmSeachResponse(**results)
             return parsed_results.films_list  # type:ignore
