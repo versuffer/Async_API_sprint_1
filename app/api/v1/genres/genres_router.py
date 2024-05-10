@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from fastapi_pagination import Page, paginate
 
 from app.api.docs.tags import ApiTags
@@ -14,13 +14,15 @@ genres_router = APIRouter(prefix='/genres')
     '',
     status_code=status.HTTP_200_OK,
     summary='Получить список жанров',
-    response_model=Page[GetGenreSchemaOut],
+    response_model=list[GetGenreSchemaOut],
     tags=[ApiTags.V1_GENRES],
 )
 async def get_genres(
     service: GenresService = Depends(),
 ):
-    return paginate(await service.get_genres())
+    if genres := await service.get_genres():
+        return genres
+    return []
 
 
 @genres_router.get(
@@ -34,4 +36,6 @@ async def get_genre(
     genre_id: UUID,
     service: GenresService = Depends(),
 ):
-    return await service.get_genre(genre_id)
+    if genre := await service.get_genre(genre_id):
+        return genre
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

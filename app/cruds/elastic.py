@@ -8,13 +8,14 @@ from app.core.logs import logger
 from app.cruds.base import CrudInterface
 from app.schemas.elastic_responses import (
     ElasticFilmSeachResponse,
-    ElasticGetFilmResponse,
+    ElasticGetFilmResponse, ElasticSearchResponse,
 )
 from app.schemas.v1.films_schemas import (
     FilmParams,
     GetFilmExtendedSchemaOut,
     GetFilmSchemaOut,
 )
+from app.schemas.v1.genres_schemas import GetGenreSchemaOut
 from app.schemas.v1.persons_schemas import GetPersonSchemaOut
 
 
@@ -97,6 +98,14 @@ class ElasticCrud(CrudInterface):
         except Exception as error:
             logger.error(f"Неизвестная ошибка при получении фильмов: {error}")
             return None
+
+    async def get_genres(self) -> list[GetGenreSchemaOut]:
+        result = self.elastic.search(index="genres")
+        validated_obj = ElasticSearchResponse(**result.body)
+        return validated_obj.get_objects
+
+    async def get_genre(self, genre_id: UUID):
+        raise NotImplementedError
 
     async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
         raise NotImplementedError

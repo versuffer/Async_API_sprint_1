@@ -6,6 +6,7 @@ from app.schemas.v1.films_schemas import (
     GetFilmExtendedSchemaOut,
     GetFilmSchemaOut,
 )
+from app.schemas.v1.genres_schemas import GetGenreSchemaOut
 
 
 class CrudInterface(ABC):
@@ -19,4 +20,12 @@ class CrudInterface(ABC):
 
     @abstractmethod
     async def get_films(self, params: FilmParams) -> list[GetFilmSchemaOut] | None:
+        pass
+
+    @abstractmethod
+    async def get_genres(self) -> list[GetGenreSchemaOut] | None:
+        pass
+
+    @abstractmethod
+    async def get_genre(self, genre_id: UUID) -> GetGenreSchemaOut | None:
         pass
