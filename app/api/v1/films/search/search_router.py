@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 
 from app.api.docs.tags import ApiTags
 from app.schemas.v1.films_schemas import GetFilmSchemaOut
