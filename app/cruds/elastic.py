@@ -1,8 +1,10 @@
 from uuid import UUID
 
+import elasticsearch
 from elasticsearch import Elasticsearch
 
 from app.core.config import es_settings
+from app.schemas.elastic_responses import ElasticSeachResponse, ElasticGetFilmResponse
 from app.schemas.v1.films_schemas import GetFilmSchemaOut, GetFilmExtendedSchemaOut
 from app.schemas.v1.persons_schemas import GetPersonSchemaOut
 
@@ -11,63 +13,71 @@ class ElasticCrud:
     def __init__(self):
         self.elastic = Elasticsearch([es_settings.dict()], timeout=5)
 
-    async def search_films(self, query: str) -> list[GetFilmSchemaOut]:
-        body = {
-            "query": {
+    async def build_search_body(self, query: str, page: int, page_size: int, sort: str | None, genre: UUID | None):
+        body = {"query": {"match_all": {}}}
+
+        if query:
+            body["query"] = {
                 "multi_match": {
                     "query": query,
                     "fields": ["title", "genres", "description", "directors_names", "actors_names", "writers_names"]
                 }
             }
-        }
-        results = self.elastic.search(index="movies", body=body)
-        films = [GetFilmSchemaOut(**film["_source"]) for film in results["hits"]["hits"]]
 
-        return films
+        if genre:
+            body["query"] = {
+                "bool": {
+                    "filter": [
+                        {"term": {"genre_ids": str(genre)}}
+                    ]
+                }
+            }
 
-    async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
-        raise NotImplementedError
+        if sort:
+            if sort.startswith('-'):
+                sort = sort.split('-')[1]
+                order = "desc"
+            else:
+                sort = sort
+                order = "asc"
+            body["sort"] = [{f"{sort}": {"order": order}}]
 
-    async def get_film(self, film_id: UUID) -> GetFilmExtendedSchemaOut:
+        body["size"] = page_size
+        body["from"] = (page - 1) * page_size
+
+        return body
+
+    def process_search_results(self, results: ElasticSeachResponse):
+        return [GetFilmSchemaOut(**hit._source.dict()) for hit in results.hits_list]
+
+    async def get_film(self, film_id: UUID) -> GetFilmExtendedSchemaOut | None:
         try:
             result = self.elastic.get(index="movies", id=str(film_id))
-            if not result["found"]:
-                raise Exception(f"Фильм с id {film_id} не найден")
             # TODO запрос жанров через сервис жанров
-            film = GetFilmExtendedSchemaOut(**result["_source"])
-            return film
-        except Exception as e:
-            print(f"Ошибка при получении фильма: {e}")
-            raise e
+            parsed_result = ElasticGetFilmResponse(**result)
+            return parsed_result.film
+        except elasticsearch.NotFoundError as error:
+            print(f"нету фильма такого: {error}")
+            return None
+        except Exception as error:
+            print(f"Неизвестная ошибка при получении фильма: {error}")
+            return None
 
-    async def get_films(self, sort: str | None, genre: UUID | None) -> list[GetFilmSchemaOut]:
+    async def search_films(self, query: str, page: int = 1, page_size: int = 10) -> list[GetFilmSchemaOut]:
+        body = await self.build_search_body(query, page, page_size, None, None)
+        results = self.elastic.search(index="movies", body=body)
+        parsed_results = ElasticSeachResponse(**results)
+        return self.process_search_results(parsed_results)
+
+    async def get_films(self, page: int, page_size: int, sort: str | None, genre: UUID | None) -> list[GetFilmSchemaOut]:
         try:
-            body = {"query": {"match_all": {}}}
-
-            if genre:
-                body["query"] = {
-                    "bool": {
-                        "filter": [
-                            {"term": {"genre_ids": str(genre)}}
-                        ]
-                    }
-                }
-
-            if sort:
-                if sort.startswith('-'):
-                    sort = sort.split('-')[1]
-                    order = "desc"
-                else:
-                    sort = sort
-                    order = "asc"
-                body["sort"] = [{f"{sort}": {"order": order}}]
-
-            body["size"] = 10
-
-            result = self.elastic.search(index="movies", body=body)
-            films = [GetFilmSchemaOut(**hit["_source"]) for hit in result["hits"]["hits"]]
-            return films
+            body = await self.build_search_body(None, page, page_size, sort, genre)
+            results = self.elastic.search(index="movies", body=body)
+            parsed_results = ElasticSeachResponse(**results)
+            return parsed_results.hits_list
         except Exception as e:
             print(f"Ошибка при получении фильмов: {e}")
             return []
 
+    async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
+        raise NotImplementedError
