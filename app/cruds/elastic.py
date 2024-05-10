@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from elasticsearch import Elasticsearch
 
 from app.core.config import es_settings
@@ -15,9 +17,31 @@ class ElasticCrud:
     async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
         raise NotImplementedError
 
-    async def get_films(self) -> list[GetFilmSchemaOut]:
+    async def get_films(self, sort: str | None, genre: UUID | None) -> list[GetFilmSchemaOut]:
         try:
-            result = self.elastic.search(index="movies", body={"query": {"match_all": {}}})
+            body = {"query": {"match_all": {}}}
+
+            if genre:
+                body["query"] = {
+                    "bool": {
+                        "filter": [
+                            {"term": {"genre_ids": str(genre)}}
+                        ]
+                    }
+                }
+
+            if sort:
+                if sort.startswith('-'):
+                    sort = sort.split('-')[1]
+                    order = "desc"
+                else:
+                    sort = sort
+                    order = "asc"
+                body["sort"] = [{f"{sort}": {"order": order}}]
+
+            body["size"] = 10
+
+            result = self.elastic.search(index="movies", body=body)
             films = [GetFilmSchemaOut(**hit["_source"]) for hit in result["hits"]["hits"]]
             return films
         except Exception as e:

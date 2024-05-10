@@ -1,10 +1,10 @@
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class GetFilmSchemaOut(BaseModel):
-    # uuid: UUID
+    uuid: UUID = Field(alias='id')
     title: str
     imdb_rating: float
 
