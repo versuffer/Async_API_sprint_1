@@ -2,10 +2,10 @@ from uuid import UUID
 
 from fastapi import Depends
 
+from app.cruds.elastic import ElasticCrud
 from app.schemas.v1.films_schemas import GetFilmSchemaOut
 from app.schemas.v1.persons_schemas import GetPersonSchemaOut
 from app.services.api.v1.base import BaseV1Service
-from app.cruds.elastic import ElasticCrud
 
 
 class PersonsService(BaseV1Service):

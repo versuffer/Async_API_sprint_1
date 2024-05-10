@@ -1,6 +1,14 @@
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
+
+
+class FilmParams(BaseModel):
+    page: int = 1
+    page_size: int = 10
+    sort: Literal['imdb_rating', '-imdb_rating'] | None = None
+    genre: UUID | None = None
 
 
 class GetFilmSchemaOut(BaseModel):

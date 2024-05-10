@@ -6,8 +6,15 @@ from elasticsearch import Elasticsearch
 from app.core.config import es_settings
 from app.core.logs import logger
 from app.cruds.base import CrudInterface
-from app.schemas.elastic_responses import ElasticFilmSeachResponse, ElasticGetFilmResponse
-from app.schemas.v1.films_schemas import GetFilmSchemaOut, GetFilmExtendedSchemaOut
+from app.schemas.elastic_responses import (
+    ElasticFilmSeachResponse,
+    ElasticGetFilmResponse,
+)
+from app.schemas.v1.films_schemas import (
+    FilmParams,
+    GetFilmExtendedSchemaOut,
+    GetFilmSchemaOut,
+)
 from app.schemas.v1.persons_schemas import GetPersonSchemaOut
 
 
@@ -79,15 +86,11 @@ class ElasticCrud(CrudInterface):
             logger.error(f"Неизвестная ошибка при получении фильмов с {query}: {error}")
             return None
 
-    async def get_films(
-            self,
-            page: int,
-            page_size: int,
-            sort: str | None,
-            genre: UUID | None
-    ) -> list[GetFilmSchemaOut] | None:
+    async def get_films(self, params: FilmParams) -> list[GetFilmSchemaOut] | None:
         try:
-            body = await self.build_film_search_body(None, page, page_size, sort, genre)
+            body = await self.build_film_search_body(
+                query=None, **params.dict()
+            )
             results = self.elastic.search(index="movies", body=body)
             parsed_results = ElasticFilmSeachResponse(**results)
             return parsed_results.films_list  # type:ignore

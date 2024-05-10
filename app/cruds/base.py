@@ -1,7 +1,11 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from app.schemas.v1.films_schemas import GetFilmSchemaOut, GetFilmExtendedSchemaOut
+from app.schemas.v1.films_schemas import (
+    FilmParams,
+    GetFilmExtendedSchemaOut,
+    GetFilmSchemaOut,
+)
 
 
 class CrudInterface(ABC):
@@ -14,11 +18,5 @@ class CrudInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_films(
-            self,
-            page: int,
-            page_size: int,
-            sort: str | None,
-            genre: UUID | None
-    ) -> list[GetFilmSchemaOut] | None:
+    async def get_films(self, params: FilmParams) -> list[GetFilmSchemaOut] | None:
         pass

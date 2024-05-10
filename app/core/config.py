@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Annotated
 
-from pydantic import HttpUrl, RedisDsn, field_validator, Field, Extra
+from pydantic import Extra, Field, HttpUrl, RedisDsn, field_validator
 from pydantic_core.core_schema import ValidationInfo
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
