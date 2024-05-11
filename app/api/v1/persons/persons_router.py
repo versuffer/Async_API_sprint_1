@@ -23,4 +23,4 @@ async def get_person(
     query_params: DetailParams = Depends(),
     service: PersonsService = Depends(),
 ):
-    return await service.get_person(query_params.query)
+    return await service.get_person(query_params)
