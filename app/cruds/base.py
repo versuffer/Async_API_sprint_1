@@ -6,7 +6,9 @@ from app.schemas.v1.films_schemas import (
     GetFilmExtendedSchemaOut,
     GetFilmSchemaOut,
 )
-from app.schemas.v1.genres_schemas import GetGenreSchemaOut
+from app.schemas.v1.genres_schemas import GenreSchema
+from app.schemas.v1.params_schema import ListParams, SearchParams, DetailParams
+from app.schemas.v1.persons_schemas import PersonSchema, PersonSchemaExtend
 
 
 class CrudInterface(ABC):
@@ -23,9 +25,21 @@ class CrudInterface(ABC):
         pass
 
     @abstractmethod
-    async def get_genres(self) -> list[GetGenreSchemaOut] | None:
+    async def get_genres(self, query_params: ListParams) -> list[GenreSchema] | None:
         pass
 
     @abstractmethod
-    async def get_genre(self, genre_id: UUID) -> GetGenreSchemaOut | None:
+    async def get_genre(self, genre_id: UUID) -> GenreSchema | None:
+        pass
+
+    @abstractmethod
+    async def get_person(self, person_id: UUID) -> PersonSchema | None:
+        pass
+
+    @abstractmethod
+    async def search_persons(self, query_params: SearchParams) -> list[PersonSchemaExtend] | None:
+        pass
+
+    @abstractmethod
+    async def search_person_films(self, query_params: DetailParams) -> list[GetFilmExtendedSchemaOut] | None:
         pass

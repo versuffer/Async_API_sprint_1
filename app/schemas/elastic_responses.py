@@ -4,7 +4,8 @@ from pydantic import BaseModel, Field
 
 from app.core.logs import logger
 from app.schemas.v1.films_schemas import GetFilmExtendedSchemaOut
-from app.schemas.v1.genres_schemas import GetGenreSchemaOut
+from app.schemas.v1.genres_schemas import GenreSchema
+from app.schemas.v1.persons_schemas import PersonSchema
 
 
 class ElasticFilmSeachResponse(BaseModel):
@@ -34,11 +35,11 @@ class BaseObject(BaseModel):
     def get_out_schema_source(self):
         match self.index:
             case IndexList.GENRES:
-                return GetGenreSchemaOut(**self.source)
+                return GenreSchema(**self.source)
             case IndexList.MOVIES:
                 return GetFilmExtendedSchemaOut(**self.source)
             case IndexList.PERSONS:
-                raise NotImplementedError
+                return PersonSchema(**self.source)
             case _:
                 logger.error("Ops not match index")
 
@@ -58,6 +59,10 @@ class ElasticSearchResponse(BaseModel):
     @property
     def get_objects(self):
         return [obj.get_out_schema_source for obj in self.result.objects]
+
+    @property
+    def uuid_list(self):
+        return [obj.id for obj in self.result.objects]
 
 
 class ElasticGetResponse(BaseObject):

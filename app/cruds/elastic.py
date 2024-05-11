@@ -18,8 +18,9 @@ from app.schemas.v1.films_schemas import (
     GetFilmExtendedSchemaOut,
     GetFilmSchemaOut,
 )
-from app.schemas.v1.genres_schemas import GetGenreSchemaOut
-from app.schemas.v1.persons_schemas import GetPersonSchemaOut
+from app.schemas.v1.genres_schemas import GenreSchema
+from app.schemas.v1.params_schema import ListParams, DetailParams
+from app.schemas.v1.persons_schemas import PersonSchema, PersonSchemaExtend
 
 
 class ElasticCrud(CrudInterface):
@@ -90,9 +91,11 @@ class ElasticCrud(CrudInterface):
             logger.error(f"Неизвестная ошибка при получении фильмов: {error}")
             return None
 
-    async def get_genres(self) -> list[GetGenreSchemaOut] | None:
+    async def get_genres(self, query_params: ListParams) -> list[GenreSchema] | None:
         try:
-            result = self.elastic.search(index="genres")
+            result = self.elastic.search(
+                index="genres", size=query_params.page_size, from_=(query_params.page - 1) * query_params.page_size
+            )
             validated_obj = ElasticSearchResponse(**result.body)
             return validated_obj.get_objects
         except ValidationError as error:
@@ -102,7 +105,7 @@ class ElasticCrud(CrudInterface):
             logger.error("Неизвестная ошибка при получении всех жанров: %s", error)
             return None
 
-    async def get_genre(self, genre_id: UUID):
+    async def get_genre(self, genre_id: UUID) -> GenreSchema | None:
         try:
             result = self.elastic.get(index="genres", id=str(genre_id))
             validated_obj = ElasticGetResponse(**result.body)
@@ -114,8 +117,97 @@ class ElasticCrud(CrudInterface):
             logger.error("Ошибка валидации: %s", error)
             return None
         except Exception as error:
-            logger.error("Неизвестная ошибка при получении всех жанров: %s", error)
+            logger.error("Неизвестная ошибка при получении жанра: %s", error)
             return None
 
-    async def search_persons(self, query: str) -> list[GetPersonSchemaOut]:
-        raise NotImplementedError
+    async def get_person(self, person_id: UUID) -> PersonSchema | None:
+        try:
+            person = self.elastic.get(index="persons", id=str(person_id))
+            validated_person = ElasticGetResponse(**person.body)
+
+            person_movies = self.elastic.search(index="movies", body=self.person_films_body(validated_person.id))
+            validated_movies = ElasticSearchResponse(**person_movies.body)
+
+            films = [movie.get_person_films(validated_person.id) for movie in validated_movies.get_objects]
+            return PersonSchemaExtend(**dict(validated_person.get_out_schema_source.model_dump(), films=films))
+        except elasticsearch.NotFoundError as error:
+            logger.warning("Не найдено действующее лицо: %s", error)
+            return None
+        except ValidationError as error:
+            logger.error("Ошибка валидации: %s", error)
+            return None
+        except Exception as error:
+            logger.error("Неизвестная ошибка при получении действующего лица: %s", error)
+            return None
+
+    async def search_persons(self, query_params) -> list[PersonSchemaExtend] | None:
+
+        body: dict = {
+            "size": query_params.page_size,
+            "from": (query_params.page - 1) * query_params.page_size,
+            "query": {"match": {"full_name": {"query": query_params.query, "fuzziness": "auto"}}},
+        }
+
+        try:
+            persons_result = self.elastic.search(index="persons", body=body)
+            persons = ElasticSearchResponse(**persons_result.body)
+
+            result: list[PersonSchemaExtend] = []
+
+            for person in persons.get_objects:
+                movies_result = self.elastic.search(index="movies", body=self.person_films_body(person.id))
+                validated_movies = ElasticSearchResponse(**movies_result.body)
+
+                films = [movie.get_person_films(person.id) for movie in validated_movies.get_objects]
+
+                person_movies = PersonSchemaExtend(**person.model_dump() | {"films": films})
+
+                result.append(person_movies)
+
+            return result
+
+        except elasticsearch.NotFoundError as error:
+            logger.warning("Не найдено действующее лицо: %s", error)
+            return None
+        except ValidationError as error:
+            logger.error("Ошибка валидации: %s", error)
+            return None
+        except Exception as error:
+            logger.error("Неизвестная ошибка при получении действующего лица: %s", error)
+            return None
+
+    async def search_person_films(self, query_params: DetailParams) -> list[GetFilmExtendedSchemaOut] | None:
+
+        try:
+            movies_result = self.elastic.search(index="movies", body=self.person_films_body(query_params.query))
+            validated_movies = ElasticSearchResponse(**movies_result.body)
+            return validated_movies.get_objects
+
+        except elasticsearch.NotFoundError as error:
+            logger.warning("Не найдено действующее лицо: %s", error)
+            return None
+        except ValidationError as error:
+            logger.error("Ошибка валидации: %s", error)
+            return None
+        except Exception as error:
+            logger.error("Неизвестная ошибка при получении действующего лица: %s", error)
+            return None
+
+    @staticmethod
+    def person_films_body(uuid) -> dict:
+        return {
+            "query": {
+                "bool": {
+                    "should": [
+                        {"nested": {"path": "actors", "query": {"bool": {"must": [{"match": {"actors.id": uuid}}]}}}},
+                        {"nested": {"path": "writers", "query": {"bool": {"must": [{"match": {"writers.id": uuid}}]}}}},
+                        {
+                            "nested": {
+                                "path": "directors",
+                                "query": {"bool": {"must": [{"match": {"directors.id": uuid}}]}},
+                            }
+                        },
+                    ]
+                }
+            }
+        }
