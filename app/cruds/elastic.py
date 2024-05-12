@@ -70,7 +70,8 @@ class ElasticCrud(CrudInterface):
                 }
                 genre_result = self.elastic.search(index="genres", body=body)
                 validated_genre = ElasticSearchResponse(**genre_result.body).get_object
-                film_genres.append(GenreSchemaBase(**validated_genre.dict()))
+                if validated_genre:
+                    film_genres.append(GenreSchemaBase(**validated_genre.dict()))
             film.genres = film_genres
             return film
         except elasticsearch.NotFoundError as error:
