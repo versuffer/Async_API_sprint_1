@@ -1,5 +1,4 @@
 from enum import StrEnum
-from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -9,13 +8,6 @@ class Roles(StrEnum):
     ACTOR = 'actor'
     WRITER = 'writer'
     DIRECTOR = 'director'
-
-
-class FilmParams(BaseModel):
-    page: int = 1
-    page_size: int = 10
-    sort: Literal['imdb_rating', '-imdb_rating'] | None = None
-    genre: UUID | None = None
 
 
 class GetFilmSchemaOut(BaseModel):
@@ -49,7 +41,6 @@ class FilmDirector(FilmPerson):
 class GetFilmExtendedSchemaOut(GetFilmSchemaOut):
     description: str
     genres: list[str]
-    # genres: list[FilmGenre] #TODO вернуть когда будут жанры
     actors: list[FilmActor]
     writers: list[FilmWriter]
     directors: list[FilmDirector]

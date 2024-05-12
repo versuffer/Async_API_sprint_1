@@ -13,13 +13,9 @@ from app.schemas.elastic_responses import (
     ElasticGetResponse,
     ElasticSearchResponse,
 )
-from app.schemas.v1.films_schemas import (
-    FilmParams,
-    GetFilmExtendedSchemaOut,
-    GetFilmSchemaOut,
-)
-from app.schemas.v1.genres_schemas import GenreSchema
-from app.schemas.v1.params_schema import ListParams, DetailParams
+from app.schemas.v1.films_schemas import GetFilmExtendedSchemaOut, GetFilmSchemaOut
+from app.schemas.v1.genres_schemas import GenreSchema, GenreSchemaBase
+from app.schemas.v1.params_schema import DetailParams, FilmParams, ListParams
 from app.schemas.v1.persons_schemas import PersonSchema, PersonSchemaExtend
 
 
@@ -31,41 +27,54 @@ class ElasticCrud(CrudInterface):
     async def build_film_search_body(
         query: str | None, page: int, page_size: int, sort: str | None, genre: UUID | None
     ):
-        body: dict = {"query": {"match_all": {}}}
+        # основной шаблон запроса с использованием match_all, если других деталей нет
+        body: dict = {
+            "query": {"bool": {"must": [{"match_all": {}}], "filter": []}},
+            "size": page_size,
+            "from": (page - 1) * page_size,
+        }
 
         if query:
-            body["query"] = {
-                "multi_match": {
-                    "query": query,
-                    "fields": ["title", "genres", "description", "directors_names", "actors_names", "writers_names"],
+            body["query"]["bool"]["must"].append(
+                {
+                    "multi_match": {
+                        "query": query,
+                        "fields": ["title", "description", "directors_names", "actors_names", "writers_names"],
+                    }
                 }
-            }
+            )
 
         if genre:
-            body["query"] = {"bool": {"filter": [{"term": {"genre_ids": str(genre)}}]}}
+            body["query"]["bool"]["filter"].append({"term": {"genres": genre}})
 
         if sort:
-            if sort.startswith('-'):
-                sort = sort.split('-')[1]
-                order = "desc"
-            else:
-                sort = sort
-                order = "asc"
-            body["sort"] = [{f"{sort}": {"order": order}}]
-
-        body["size"] = page_size
-        body["from"] = (page - 1) * page_size
+            direction = "desc" if sort.startswith('-') else "asc"
+            field_name = sort.lstrip('-')
+            body["sort"] = [{field_name: {"order": direction}}]
 
         return body
 
     async def get_film(self, film_id: UUID) -> GetFilmExtendedSchemaOut | None:
         try:
             result = self.elastic.get(index="movies", id=str(film_id))
-            # TODO запрос жанров через сервис жанров
             parsed_result = ElasticGetFilmResponse(**result)
-            return parsed_result.film
+            film = parsed_result.film
+            film_genres = []
+            for genre in film.genres:
+                body: dict = {
+                    "query": {"match": {"name": {"query": genre, "fuzziness": "auto"}}},
+                }
+                genre_result = self.elastic.search(index="genres", body=body)
+                validated_genre = ElasticSearchResponse(**genre_result.body).get_object
+                if validated_genre:
+                    film_genres.append(GenreSchemaBase(**validated_genre.dict()))
+            film.genres = film_genres  # type: ignore
+            return film
         except elasticsearch.NotFoundError as error:
             logger.warning(f"Не найден фильм с {film_id=}: {error}")
+            return None
+        except ValidationError as error:
+            logger.error(f"Ошибка валидации: {error}")
             return None
         except Exception as error:
             logger.error(f"Неизвестная ошибка при получении фильма с {film_id=}: {error}")
@@ -83,7 +92,13 @@ class ElasticCrud(CrudInterface):
 
     async def get_films(self, params: FilmParams) -> list[GetFilmSchemaOut]:
         try:
-            body = await self.build_film_search_body(query=None, **params.dict())
+            if params and params.genre:
+                genre = await self.get_genre(params.genre)
+                body = await self.build_film_search_body(
+                    query=None, **params.dict() | {'genre': genre.name}  # type: ignore
+                )
+            else:
+                body = await self.build_film_search_body(query=None, **params.dict())  # type: ignore
             results = self.elastic.search(index="movies", body=body)
             parsed_results = ElasticFilmSeachResponse(**results)
             return parsed_results.films_list  # type:ignore

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.docs.tags import ApiTags
 from app.schemas.v1.genres_schemas import GenreSchemaOut
-from app.schemas.v1.params_schema import ListParams, DetailParams
+from app.schemas.v1.params_schema import DetailParams, ListParams
 from app.services.api.v1.genres_service.genres_service import GenresService
 
 genres_router = APIRouter(prefix='/genres')
