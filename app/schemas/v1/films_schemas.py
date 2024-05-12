@@ -49,7 +49,6 @@ class FilmDirector(FilmPerson):
 class GetFilmExtendedSchemaOut(GetFilmSchemaOut):
     description: str
     genres: list[str]
-    # genres: list[FilmGenre] #TODO вернуть когда будут жанры
     actors: list[FilmActor]
     writers: list[FilmWriter]
     directors: list[FilmDirector]

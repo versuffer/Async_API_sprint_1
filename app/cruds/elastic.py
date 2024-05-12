@@ -18,8 +18,8 @@ from app.schemas.v1.films_schemas import (
     GetFilmExtendedSchemaOut,
     GetFilmSchemaOut,
 )
-from app.schemas.v1.genres_schemas import GenreSchema
-from app.schemas.v1.params_schema import ListParams, DetailParams
+from app.schemas.v1.genres_schemas import GenreSchema, GenreSchemaBase
+from app.schemas.v1.params_schema import DetailParams, ListParams
 from app.schemas.v1.persons_schemas import PersonSchema, PersonSchemaExtend
 
 
@@ -61,21 +61,23 @@ class ElasticCrud(CrudInterface):
     async def get_film(self, film_id: UUID) -> GetFilmExtendedSchemaOut | None:
         try:
             result = self.elastic.get(index="movies", id=str(film_id))
-            # TODO запрос жанров через сервис жанров
             parsed_result = ElasticGetFilmResponse(**result)
             film = parsed_result.film
-
+            film_genres = []
             for genre in film.genres:
                 body: dict = {
                     "query": {"match": {"name": {"query": genre, "fuzziness": "auto"}}},
                 }
                 genre_result = self.elastic.search(index="genres", body=body)
-            #     validated_genre = ElasticSearchResponse(**genre_result.body)
-            #     genres = [genre.get_person_films(person.id) for genre in validated_genre.get_objects]
-
+                validated_genre = ElasticSearchResponse(**genre_result.body).get_object
+                film_genres.append(GenreSchemaBase(**validated_genre.dict()))
+            film.genres = film_genres
             return film
         except elasticsearch.NotFoundError as error:
             logger.warning(f"Не найден фильм с {film_id=}: {error}")
+            return None
+        except ValidationError as error:
+            logger.error(f"Ошибка валидации: {error}")
             return None
         except Exception as error:
             logger.error(f"Неизвестная ошибка при получении фильма с {film_id=}: {error}")
