@@ -1,9 +1,11 @@
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi_cache.decorator import cache
 
 from app.api.docs.tags import ApiTags
 from app.api.v1.films.search.search_router import search_router
+from app.core.config import app_settings
 from app.schemas.v1.films_schemas import (
     FilmParams,
     GetFilmExtendedSchemaOut,
@@ -22,6 +24,7 @@ films_router.include_router(search_router)
     response_model=list[GetFilmSchemaOut],
     tags=[ApiTags.V1_FILMS],
 )
+@cache(expire=app_settings.DEFAULT_EXPIRE_TIME_SECONDS)
 async def get_films(
     params: FilmParams = Depends(),
     service: FilmsService = Depends(),
@@ -36,6 +39,7 @@ async def get_films(
     response_model=GetFilmExtendedSchemaOut,
     tags=[ApiTags.V1_FILMS],
 )
+@cache(expire=app_settings.DEFAULT_EXPIRE_TIME_SECONDS)
 async def get_film(
     film_id: UUID,
     service: FilmsService = Depends(),

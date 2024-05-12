@@ -1,8 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi_cache.decorator import cache
 
 from app.api.docs.tags import ApiTags
+from app.core.config import app_settings
 from app.schemas.v1.genres_schemas import GenreSchemaOut
-from app.schemas.v1.params_schema import ListParams, DetailParams
+from app.schemas.v1.params_schema import DetailParams, ListParams
 from app.services.api.v1.genres_service.genres_service import GenresService
 
 genres_router = APIRouter(prefix='/genres')
@@ -15,6 +17,7 @@ genres_router = APIRouter(prefix='/genres')
     response_model=list[GenreSchemaOut],
     tags=[ApiTags.V1_GENRES],
 )
+@cache(expire=app_settings.DEFAULT_EXPIRE_TIME_SECONDS)
 async def get_genres(
     query_params: ListParams = Depends(),
     service: GenresService = Depends(),
@@ -31,6 +34,7 @@ async def get_genres(
     response_model=GenreSchemaOut,
     tags=[ApiTags.V1_GENRES],
 )
+@cache(expire=app_settings.DEFAULT_EXPIRE_TIME_SECONDS)
 async def get_genre(
     query_params: DetailParams = Depends(),
     service: GenresService = Depends(),

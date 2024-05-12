@@ -19,7 +19,7 @@ from app.schemas.v1.films_schemas import (
     GetFilmSchemaOut,
 )
 from app.schemas.v1.genres_schemas import GenreSchema
-from app.schemas.v1.params_schema import ListParams, DetailParams
+from app.schemas.v1.params_schema import DetailParams, ListParams
 from app.schemas.v1.persons_schemas import PersonSchema, PersonSchemaExtend
 
 

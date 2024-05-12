@@ -27,6 +27,9 @@ class Settings(BaseSettings):
     ELASTIC_SCHEMA: str
     ELASTIC_URL: HttpUrl | str = ''
 
+    # Cache
+    DEFAULT_EXPIRE_TIME_SECONDS: int = 60
+
     model_config = SettingsConfigDict(env_file=BASEDIR / '.env')
 
     @field_validator('REDIS_DSN')
