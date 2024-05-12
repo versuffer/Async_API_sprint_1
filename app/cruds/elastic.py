@@ -63,7 +63,17 @@ class ElasticCrud(CrudInterface):
             result = self.elastic.get(index="movies", id=str(film_id))
             # TODO запрос жанров через сервис жанров
             parsed_result = ElasticGetFilmResponse(**result)
-            return parsed_result.film
+            film = parsed_result.film
+
+            for genre in film.genres:
+                body: dict = {
+                    "query": {"match": {"name": {"query": genre, "fuzziness": "auto"}}},
+                }
+                genre_result = self.elastic.search(index="genres", body=body)
+            #     validated_genre = ElasticSearchResponse(**genre_result.body)
+            #     genres = [genre.get_person_films(person.id) for genre in validated_genre.get_objects]
+
+            return film
         except elasticsearch.NotFoundError as error:
             logger.warning(f"Не найден фильм с {film_id=}: {error}")
             return None
