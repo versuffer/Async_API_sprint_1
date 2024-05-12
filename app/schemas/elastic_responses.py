@@ -61,6 +61,11 @@ class ElasticSearchResponse(BaseModel):
         return [obj.get_out_schema_source for obj in self.result.objects]
 
     @property
+    def get_object(self):
+        result = [obj.get_out_schema_source for obj in self.result.objects]
+        return result[0] if result else None
+
+    @property
     def uuid_list(self):
         return [obj.id for obj in self.result.objects]
 
