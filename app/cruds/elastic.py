@@ -29,32 +29,39 @@ class ElasticCrud(CrudInterface):
 
     @staticmethod
     async def build_film_search_body(
-        query: str | None, page: int, page_size: int, sort: str | None, genre: UUID | None
+            query: str | None, page: int, page_size: int, sort: str | None, genre: UUID | None
     ):
-        body: dict = {"query": {"match_all": {}}}
+        # основной шаблон запроса с использованием match_all, если других деталей нет
+        body: dict = {
+            "query": {
+                "bool": {
+                    "must": [{"match_all": {}}],
+                    "filter": []
+                }
+            },
+            "size": page_size,
+            "from": (page - 1) * page_size
+        }
 
         if query:
-            body["query"] = {
+            body["query"]["bool"]["must"].append({
                 "multi_match": {
                     "query": query,
-                    "fields": ["title", "genres", "description", "directors_names", "actors_names", "writers_names"],
+                    "fields": [
+                        "title", "description", "directors_names", "actors_names", "writers_names"
+                    ]
                 }
-            }
+            })
 
         if genre:
-            body["query"] = {"bool": {"filter": [{"term": {"genre_ids": str(genre)}}]}}
+            body["query"]["bool"]["filter"].append({
+                "term": {"genres": genre}
+            })
 
         if sort:
-            if sort.startswith('-'):
-                sort = sort.split('-')[1]
-                order = "desc"
-            else:
-                sort = sort
-                order = "asc"
-            body["sort"] = [{f"{sort}": {"order": order}}]
-
-        body["size"] = page_size
-        body["from"] = (page - 1) * page_size
+            direction = "desc" if sort.startswith('-') else "asc"
+            field_name = sort.lstrip('-')
+            body["sort"] = [{field_name: {"order": direction}}]
 
         return body
 
@@ -95,7 +102,11 @@ class ElasticCrud(CrudInterface):
 
     async def get_films(self, params: FilmParams) -> list[GetFilmSchemaOut]:
         try:
-            body = await self.build_film_search_body(query=None, **params.dict())
+            if params and params.genre:
+                genre = await self.get_genre(params.genre)
+                body = await self.build_film_search_body(query=None, **params.dict() | {'genre': genre.name})
+            else:
+                body = await self.build_film_search_body(query=None, **params.dict())
             results = self.elastic.search(index="movies", body=body)
             parsed_results = ElasticFilmSeachResponse(**results)
             return parsed_results.films_list  # type:ignore
