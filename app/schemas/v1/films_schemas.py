@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+from app.schemas.v1.params_schema import PaginationMixin
+
 
 class Roles(StrEnum):
     ACTOR = 'actor'
@@ -11,9 +13,7 @@ class Roles(StrEnum):
     DIRECTOR = 'director'
 
 
-class FilmParams(BaseModel):
-    page: int = 1
-    page_size: int = 10
+class FilmParams(PaginationMixin):
     sort: Literal['imdb_rating', '-imdb_rating'] | None = None
     genre: UUID | None = None
 
