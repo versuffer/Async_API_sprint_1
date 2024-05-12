@@ -1,3 +1,4 @@
+from typing import Literal
 from uuid import UUID
 
 from fastapi import Query
@@ -23,3 +24,8 @@ class SearchParams(PaginationMixin, QueryMixin):
 
 class ListParams(PaginationMixin):
     pass
+
+
+class FilmParams(PaginationMixin):
+    sort: Literal['imdb_rating', '-imdb_rating'] | None = None
+    genre: UUID | None = None

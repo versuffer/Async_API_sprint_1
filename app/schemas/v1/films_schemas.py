@@ -1,21 +1,13 @@
 from enum import StrEnum
-from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
-
-from app.schemas.v1.params_schema import PaginationMixin
 
 
 class Roles(StrEnum):
     ACTOR = 'actor'
     WRITER = 'writer'
     DIRECTOR = 'director'
-
-
-class FilmParams(PaginationMixin):
-    sort: Literal['imdb_rating', '-imdb_rating'] | None = None
-    genre: UUID | None = None
 
 
 class GetFilmSchemaOut(BaseModel):

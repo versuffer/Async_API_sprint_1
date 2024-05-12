@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
 from uuid import UUID
 
-from app.schemas.v1.films_schemas import (
-    FilmParams,
-    GetFilmExtendedSchemaOut,
-    GetFilmSchemaOut,
-)
+from app.schemas.v1.films_schemas import GetFilmExtendedSchemaOut, GetFilmSchemaOut
 from app.schemas.v1.genres_schemas import GenreSchema
-from app.schemas.v1.params_schema import DetailParams, ListParams, SearchParams
+from app.schemas.v1.params_schema import (
+    DetailParams,
+    FilmParams,
+    ListParams,
+    SearchParams,
+)
 from app.schemas.v1.persons_schemas import PersonSchema, PersonSchemaExtend
 
 

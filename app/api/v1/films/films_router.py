@@ -4,11 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.api.docs.tags import ApiTags
 from app.api.v1.films.search.search_router import search_router
-from app.schemas.v1.films_schemas import (
-    FilmParams,
-    GetFilmExtendedSchemaOut,
-    GetFilmSchemaOut,
-)
+from app.schemas.v1.films_schemas import GetFilmExtendedSchemaOut, GetFilmSchemaOut
+from app.schemas.v1.params_schema import FilmParams
 from app.services.api.v1.films_service.films_service import FilmsService
 
 films_router = APIRouter(prefix='/films')

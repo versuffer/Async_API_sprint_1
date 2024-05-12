@@ -13,13 +13,9 @@ from app.schemas.elastic_responses import (
     ElasticGetResponse,
     ElasticSearchResponse,
 )
-from app.schemas.v1.films_schemas import (
-    FilmParams,
-    GetFilmExtendedSchemaOut,
-    GetFilmSchemaOut,
-)
+from app.schemas.v1.films_schemas import GetFilmExtendedSchemaOut, GetFilmSchemaOut
 from app.schemas.v1.genres_schemas import GenreSchema, GenreSchemaBase
-from app.schemas.v1.params_schema import DetailParams, ListParams
+from app.schemas.v1.params_schema import DetailParams, FilmParams, ListParams
 from app.schemas.v1.persons_schemas import PersonSchema, PersonSchemaExtend
 
 
@@ -72,7 +68,7 @@ class ElasticCrud(CrudInterface):
                 validated_genre = ElasticSearchResponse(**genre_result.body).get_object
                 if validated_genre:
                     film_genres.append(GenreSchemaBase(**validated_genre.dict()))
-            film.genres = film_genres
+            film.genres = film_genres  # type: ignore
             return film
         except elasticsearch.NotFoundError as error:
             logger.warning(f"Не найден фильм с {film_id=}: {error}")
@@ -98,9 +94,11 @@ class ElasticCrud(CrudInterface):
         try:
             if params and params.genre:
                 genre = await self.get_genre(params.genre)
-                body = await self.build_film_search_body(query=None, **params.dict() | {'genre': genre.name})
+                body = await self.build_film_search_body(
+                    query=None, **params.dict() | {'genre': genre.name}  # type: ignore
+                )
             else:
-                body = await self.build_film_search_body(query=None, **params.dict())
+                body = await self.build_film_search_body(query=None, **params.dict())  # type: ignore
             results = self.elastic.search(index="movies", body=body)
             parsed_results = ElasticFilmSeachResponse(**results)
             return parsed_results.films_list  # type:ignore

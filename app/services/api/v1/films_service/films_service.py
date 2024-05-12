@@ -4,11 +4,8 @@ from fastapi import Depends
 
 from app.cruds.base import CrudInterface
 from app.cruds.get_crud import get_crud
-from app.schemas.v1.films_schemas import (
-    FilmParams,
-    GetFilmExtendedSchemaOut,
-    GetFilmSchemaOut,
-)
+from app.schemas.v1.films_schemas import GetFilmExtendedSchemaOut, GetFilmSchemaOut
+from app.schemas.v1.params_schema import FilmParams
 from app.services.api.v1.base import BaseV1Service
 
 
