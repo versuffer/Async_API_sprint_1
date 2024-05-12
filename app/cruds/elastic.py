@@ -29,34 +29,27 @@ class ElasticCrud(CrudInterface):
 
     @staticmethod
     async def build_film_search_body(
-            query: str | None, page: int, page_size: int, sort: str | None, genre: UUID | None
+        query: str | None, page: int, page_size: int, sort: str | None, genre: UUID | None
     ):
         # основной шаблон запроса с использованием match_all, если других деталей нет
         body: dict = {
-            "query": {
-                "bool": {
-                    "must": [{"match_all": {}}],
-                    "filter": []
-                }
-            },
+            "query": {"bool": {"must": [{"match_all": {}}], "filter": []}},
             "size": page_size,
-            "from": (page - 1) * page_size
+            "from": (page - 1) * page_size,
         }
 
         if query:
-            body["query"]["bool"]["must"].append({
-                "multi_match": {
-                    "query": query,
-                    "fields": [
-                        "title", "description", "directors_names", "actors_names", "writers_names"
-                    ]
+            body["query"]["bool"]["must"].append(
+                {
+                    "multi_match": {
+                        "query": query,
+                        "fields": ["title", "description", "directors_names", "actors_names", "writers_names"],
+                    }
                 }
-            })
+            )
 
         if genre:
-            body["query"]["bool"]["filter"].append({
-                "term": {"genres": genre}
-            })
+            body["query"]["bool"]["filter"].append({"term": {"genres": genre}})
 
         if sort:
             direction = "desc" if sort.startswith('-') else "asc"
