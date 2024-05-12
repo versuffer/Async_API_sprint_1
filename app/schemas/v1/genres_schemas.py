@@ -1,9 +1,13 @@
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
-class GetGenreSchemaOut(BaseModel):
-    uuid: UUID
+class GenreSchema(BaseModel):
+    id: UUID = Field(serialization_alias="uuid")
     name: str
-    description: float
+    description: str
+
+
+class GenreSchemaOut(GenreSchema):
+    pass

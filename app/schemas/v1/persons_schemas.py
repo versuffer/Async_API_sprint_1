@@ -1,7 +1,7 @@
 from enum import StrEnum
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Roles(StrEnum):
@@ -15,7 +15,14 @@ class PersonFilm(BaseModel):
     roles: list[Roles]
 
 
-class GetPersonSchemaOut(BaseModel):
-    uuid: UUID
+class PersonSchema(BaseModel):
+    id: UUID
     full_name: str
+
+
+class PersonSchemaExtend(PersonSchema):
     films: list[PersonFilm]
+
+
+class PersonSchemaOut(PersonSchemaExtend):
+    id: UUID = Field(serialization_alias="uuid")
