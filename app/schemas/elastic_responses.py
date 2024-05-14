@@ -41,7 +41,7 @@ class BaseObject(BaseModel):
             case IndexList.PERSONS:
                 return PersonSchema(**self.source)
             case _:
-                logger.error("Ops not match index")
+                logger.error("Ops not match index: %s", self.index)
 
 
 class Object(BaseObject):
