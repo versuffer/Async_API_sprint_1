@@ -34,5 +34,5 @@ app.include_router(api_router)
 
 
 if __name__ == '__main__':
-    logger.info(f'Start with configuration: \n{pformat(app_settings.model_dump())}')
-    uvicorn.run('main:app', host='localhost', port=10000)
+    logger.info("Start with configuration: \n%s", pformat(app_settings.model_dump()))
+    uvicorn.run(app, host='localhost', port=10000)

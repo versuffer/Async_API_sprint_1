@@ -71,13 +71,13 @@ class ElasticCrud(CrudInterface):
             film.genres = film_genres  # type: ignore
             return film
         except elasticsearch.NotFoundError as error:
-            logger.warning(f"Не найден фильм с {film_id=}: {error}")
+            logger.warning("Не найден фильм с id: %s, ошибка: %s", film_id, error)
             return None
         except ValidationError as error:
-            logger.error(f"Ошибка валидации: {error}")
+            logger.error("Ошибка валидации: %s", error)
             return None
         except Exception as error:
-            logger.error(f"Неизвестная ошибка при получении фильма с {film_id=}: {error}")
+            logger.error("Неизвестная ошибка при получении фильма с id: %s, ошибка: %s", film_id, error)
             return None
 
     async def search_films(self, query: str, page: int, page_size: int) -> list[GetFilmSchemaOut]:
@@ -87,7 +87,7 @@ class ElasticCrud(CrudInterface):
             parsed_results = ElasticFilmSeachResponse(**results)
             return parsed_results.films_list  # type:ignore
         except Exception as error:
-            logger.error(f"Неизвестная ошибка при получении фильмов с {query}: {error}")
+            logger.error("Неизвестная ошибка при получении фильмов по запросу: %s, ошибка: %s", query, error)
             return []
 
     async def get_films(self, params: FilmParams) -> list[GetFilmSchemaOut]:
@@ -103,7 +103,7 @@ class ElasticCrud(CrudInterface):
             parsed_results = ElasticFilmSeachResponse(**results)
             return parsed_results.films_list  # type:ignore
         except Exception as error:
-            logger.error(f"Неизвестная ошибка при получении фильмов: {error}")
+            logger.error("Неизвестная ошибка при получении фильмов: %s", error)
             return []
 
     async def get_genres(self, query_params: ListParams) -> list[GenreSchema] | None:
