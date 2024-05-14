@@ -18,5 +18,5 @@ WORKDIR ..
 
 EXPOSE 8001
 
-CMD ["gunicorn", "-w", "1", "-k", "uvicorn.workers.UvicornWorker", "app.main:app"]
+CMD ["gunicorn", "-b", "0.0.0.0:8001", "-w", "1", "-k", "uvicorn.workers.UvicornWorker", "app.main:app"]
 
